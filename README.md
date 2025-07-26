@@ -1,86 +1,62 @@
-# Agentis
+# Agentis CLI (Ollama Edition)
 
-<div align="center">
+This repo contains a prebuilt command line interface for experimenting with **Agentis**, an AI‑powered development assistant. The bundled `cli.mjs` communicates with a local [Ollama](https://ollama.ai/) server to provide interactive coding help directly in the terminal.
 
+## What it does
 
-**Your AI-Powered Development Companion**
-]
-Agentis is a powerful terminal-based AI coding assistant that seamlessly integrates with your development workflow. Supporting multiple AI providers through the OpenAI-compatible API standard, Agentis brings the power of AI directly to your terminal.
+When executed, the CLI automatically ensures that `ollama serve` is running. If the server is not found, it attempts to launch it, waits for the API to become responsive, and gracefully terminates the process on exit. This behaviour is highlighted in [`cli.mjs`](cli.mjs). You can see the startup logic below:
 
-## ✨ Key Features
-
-- 🧠 **Universal AI Support**
-  - Works with any OpenAI-compatible API
-  - Supports Claude, GPT-4, Groq, Ollama, and more
-  - Easy provider switching with /model
-
-- 🛠️ **Intelligent Code Operations**
-  - Deep codebase understanding and navigation
-  - Smart code refactoring and bug fixing
-  - Automated testing and command execution
-  - Context-aware file modifications
-
-- 🔒 **Security First**
-  - Local-first architecture
-  - No telemetry or data collection
-  - Secure credential management
-  - Sandboxed command execution
-
-- 🚀 **Developer Experience**
-  - Project-specific documentation via `AGENTIS.md`
-  - Customizable workflows and commands
-  - Intelligent context management
-  - Git-aware operations
-
-## 🚀 Quick Start
-
-```bash
-# Install Agentis CLI globally
-npm install -g agentis-cli
-
-# Navigate to your project
-cd your-project
-
-# Launch Agentis
-agentis
+```javascript
+execSync("pgrep -f 'ollama serve' || ollama serve &", { stdio: 'ignore' });
+execSync("open -a Ollama", { stdio: 'ignore' });
+let attempts = 10;
+while (attempts--) {
+  try {
+    execSync("curl -s http://localhost:11434/version", { stdio: 'ignore' });
+    break;
+  } catch (e) {
+    execSync("sleep 0.5");
+  }
+}
 ```
 
-## 📖 Usage
+The script also cleans up with:
 
-### First-Time Setup
+```javascript
+process.on('exit', () => {
+  try {
+    execSync("pkill -f 'ollama serve'", { stdio: 'ignore' });
+    console.log("🛑 Ollama server killed on exit.");
+  } catch (e) {
+    // Silent fail
+  }
+});
+```
 
-1. Run `agentis` in your project directory
-2. Configure your preferred AI provider using `/model`
-3. Initialize project-specific settings with `/init`
+## Installation
 
-### Common Commands
+This package targets **Node.js 18+**. Install dependencies and run the CLI with:
 
-- `/help` - View all available commands
-- `/model` - Configure AI providers
-- `/init` - Create project documentation
-- `/bug` - Report issues directly from CLI
-- `/config` - Adjust settings and preferences
+```bash
+npm install
+default_entry=node cli.mjs
+node $default_entry
+```
 
+Running `node cli.mjs` will attempt to start `ollama serve` locally. If Ollama is not installed, the process will exit with an error.
 
-## 📝 License
+## Usage
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Once Ollama is running, the CLI provides an interactive session where Agentis can inspect code, modify files and execute shell commands. See [Agentis documentation](https://github.com/agentislabs/agentis) for the full feature set.
 
-## 🔐 Privacy & Security
+## Repository layout
 
-- No telemetry or usage tracking
-- Data stays between you and your chosen AI provider
-- Local-first architecture
-- Transparent, open-source codebase
+- `cli.mjs` – precompiled entry point
+- `yoga.wasm` – dependency for text layout rendering
+- `package.json` – npm package metadata
+- `docs/` – architecture notes
 
-## 🌟 Support
+## Next steps
 
-- Report bugs via `/bug` command or [GitHub Issues](https://github.com/agentislabs/agentis/issues)
-- Join our [Discord Community](https://discord.gg/agentis) for discussions
-- Follow us on [Twitter](https://twitter.com/agentislab) for updates
+The underlying TypeScript sources are not included here. Future work might expose the source, add tests and extend documentation.
 
----
-
-<div align="center">
-Made with ❤️ by Agentis Labs
-</div>
