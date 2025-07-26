@@ -1,3 +1,12 @@
+# Node modules and caches
 node_modules/
 *.log
-*.log
+npm-debug.log*
+yarn-error.log*
+
+# Build artifacts
+cli.mjs
+*.wasm
+
+# Environment files
+.env
